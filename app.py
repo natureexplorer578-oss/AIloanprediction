@@ -194,7 +194,7 @@ if predict:
     """
 
     response = client.models.generate_content(
-        model="models/gemini-flash-latest",
+        model="gemini-3.8-flash",
         contents=prompt
     )
 
