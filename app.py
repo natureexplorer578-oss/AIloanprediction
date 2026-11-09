@@ -11,7 +11,7 @@ from groq import Groq
 # ===============================
 load_dotenv()
 
-api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
+api_key = st.secrets.get("GROQ_API_KEY", os.getenv("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"))
 
 client = Groq(api_key=api_key) if api_key else None
 
