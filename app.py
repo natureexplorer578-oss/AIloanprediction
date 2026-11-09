@@ -1,15 +1,19 @@
+
 import streamlit as st
 import pandas as pd
 import joblib
 import os
 from dotenv import load_dotenv
-from google import genai
+from groq import Groq
 
 # ===============================
-# ENV & GEMINI
+# ENV & GROQ
 # ===============================
 load_dotenv()
-client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+
+api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
+
+client = Groq(api_key=api_key) if api_key else None
 
 # ===============================
 # LOAD MODELS
@@ -100,11 +104,10 @@ st.markdown("""
 🏦 AI-Driven Credit Scoring and Loan Decision Support System
 </h2>
 """, unsafe_allow_html=True)
+
 # ===============================
 # INPUT CARD
 # ===============================
-
-
 st.markdown('<div class="card">', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
@@ -129,7 +132,9 @@ st.markdown('</div>', unsafe_allow_html=True)
 # PREDICT BUTTON
 # ===============================
 st.markdown('<div style="margin-top:10px;">', unsafe_allow_html=True)
+
 predict = st.button("🔍 Predict Loan Decision")
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 if predict:
@@ -138,9 +143,11 @@ if predict:
     self_emp = 1 if self_emp == "Yes" else 0
 
     # ---------- Loan Amount Prediction ----------
-    amt_df = pd.DataFrame([[dependents, edu, self_emp, income, cibil,
-                            res_asset, com_asset, lux_asset, bank_asset, loan_term]],
-                          columns=amount_columns)
+    amt_df = pd.DataFrame(
+        [[dependents, edu, self_emp, income, cibil,
+          res_asset, com_asset, lux_asset, bank_asset, loan_term]],
+        columns=amount_columns
+    )
 
     eligible_amount = int(amount_model.predict(amt_df)[0])
 
@@ -172,7 +179,9 @@ if predict:
 
     if decision == 1:
         st.success("✅ Loan Approved")
-        st.markdown(f"### 💰 Eligible Loan Amount: ₹ {eligible_amount:,}")
+        st.markdown(
+            f"### 💰 Eligible Loan Amount: ₹ {eligible_amount:,}"
+        )
         status = "APPROVED"
     else:
         st.error("❌ Loan Rejected")
@@ -180,29 +189,56 @@ if predict:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ---------- GEMINI EXPLANATION ----------
+    # ---------- GROQ AI EXPLANATION ----------
     prompt = f"""
     Loan Status: {status}
     Income: {income}
     CIBIL: {cibil}
     Dependents: {dependents}
     Loan Term: {loan_term}
+    Eligible Loan Amount: {eligible_amount}
 
-    Explain clearly in bullet points.
-    If approved, congratulate.
-    If rejected, explain reasons.
+    Explain the prediction clearly in bullet points.
+    If approved, congratulate the user.
+    If rejected, explain possible factors based on the
+    information provided. Do not invent reasons.
+    Mention that this is a machine learning prediction,
+    not a final banking decision.
     """
 
-    response = client.models.generate_content(
-        model="gemini-3.8-flash",
-        contents=prompt
-    )
+    st.markdown("### 🤖 Loan AI Assistant")
 
-    st.markdown(f"""
-    <div class="chatbox">
-        <div class="chat-title">🤖 Loan AI Assistant</div>
-        <div class="chat-content">
-            <div class="chat-msg">{response.text}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    try:
+        if client is None:
+            st.warning("Groq API key is not configured.")
+
+        else:
+            with st.spinner("Generating AI explanation..."):
+
+                response = client.chat.completions.create(
+                    model="openai/gpt-oss-20b",
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ]
+                )
+
+                explanation = response.choices[0].message.content
+
+                st.markdown(f"""
+                <div class="chatbox">
+                    <div class="chat-title">
+                        🤖 Loan AI Assistant
+                    </div>
+                    <div class="chat-content">
+                        <div class="chat-msg">
+                            {explanation}
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+    except Exception as e:
+        st.error(f"Groq API Error: {e}")
