@@ -55,35 +55,5 @@ Gemini generates a natural-language explanation that is displayed in the applica
 5. Gemini generates an explanation.
 6. Streamlit displays the prediction and AI-generated explanation.
 
-## 🚀 How to Run the Project
 
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/natureexplorer578-oss/AIloanprediction.git
-   ```
-
-2. Navigate to the project directory:
-
-   ```bash
-   cd AIloanprediction
-   ```
-
-3. Install the required dependencies (add a requirements.txt file with your project's dependencies):
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Configure your Google Gemini API key in a `.env` file:
-
-   ```env
-   GOOGLE_API_KEY=your_api_key
-   ```
-
-5. Run the application:
-
-   ```bash
-   streamlit run app.py
-   ```
 
